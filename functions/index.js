@@ -7,8 +7,28 @@ admin.initializeApp();
 
 exports.deleteUserSequence = functions.auth
   .user()
-  .onDelete(async (userRecord, context) => {
-    console.log(userRecord.uid);
+  .onDelete(async (userRecord) => {
+    // Delete files
+    admin
+      .storage()
+      .bucket()
+      .deleteFiles(
+        {
+          prefix: `users/${userRecord.uid}/`
+        },
+        (err) => {
+          if (err) {
+            console.log(err);
+          } else {
+            console.log(
+              `All the Firebase Storage files in ${userRecord.uid}/ have been deleted`
+            );
+          }
+        }
+      );
+    // Delete user Doc
+    await admin.firestore().collection('users').doc(userRecord.uid).delete();
+    console.log(`deleted user ${userRecord.uid}`);
   });
 
 // exports.testFunction = functions.https.onRequest(async (req, res) => {
