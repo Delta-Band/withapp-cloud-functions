@@ -5,31 +5,68 @@ const functions = require('firebase-functions');
 const admin = require('firebase-admin');
 admin.initializeApp();
 
-exports.deleteUserSequence = functions.auth
-  .user()
-  .onDelete(async (userRecord) => {
-    // Delete files
-    admin
-      .storage()
-      .bucket()
-      .deleteFiles(
-        {
-          prefix: `users/${userRecord.uid}/`
-        },
-        (err) => {
-          if (err) {
-            console.log(err);
-          } else {
-            console.log(
-              `All the Firebase Storage files in ${userRecord.uid}/ have been deleted`
-            );
-          }
-        }
-      );
-    // Delete user Doc
-    await admin.firestore().collection('users').doc(userRecord.uid).delete();
-    console.log(`deleted user ${userRecord.uid}`);
+exports.deleteUser = functions.auth.user().onDelete(async (userRecord) => {
+  const userRef = admin.firestore().collection('users').doc(userRecord.uid);
+  const userDoc = await userRef.get();
+  const userData = userDoc.data();
+
+  // Cleaup user's Stories
+  // functions.logger.info(
+  //   'userData.stories.owner',
+  //   JSON.stringify(userData.stories.owner)
+  // );
+  userData.stories.owner.forEach(async (story) => {
+    await deleteStory(story.id);
   });
+
+  // Clean up user settings folder
+  admin
+    .storage()
+    .bucket()
+    .deleteFiles(
+      {
+        prefix: `users/${userRecord.uid}/`
+      },
+      (err) => {
+        if (err) {
+          console.log(err);
+        } else {
+          console.log(
+            `All the Firebase Storage files in users/${userRecord.uid}/ have been deleted`
+          );
+        }
+      }
+    );
+
+  // Delete user's Doc
+  try {
+    await userRef.delete();
+    console.log(`deleted user ${userRecord.uid}`);
+  } catch (err) {
+    console.error(err);
+  }
+});
+
+async function deleteStory(storyId) {
+  await admin.firestore().collection('stories').doc(storyId).delete();
+  admin
+    .storage()
+    .bucket()
+    .deleteFiles(
+      {
+        prefix: `stories/${storyId}/`
+      },
+      (err) => {
+        if (err) {
+          console.log(err);
+        } else {
+          console.log(
+            `All the Firebase Storage files in stories/${storyId}/ have been deleted`
+          );
+        }
+      }
+    );
+}
 
 // exports.testFunction = functions.https.onRequest(async (req, res) => {
 //   const user = await admin.auth().getUserByEmail('ofer@delta.band');

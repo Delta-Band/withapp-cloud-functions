@@ -1,4 +1,6 @@
 {
+  "name": "with_app_cloud_functions",
+  "version": "0.0.1",
   "dependencies": {
     "firebase-admin": "^9.1.1",
     "firebase-functions": "^3.11.0"
