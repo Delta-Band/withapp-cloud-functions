@@ -11,9 +11,11 @@ exports.deleteUser = functions.auth.user().onDelete(async (userRecord) => {
   const userData = userDoc.data();
 
   // Cleaup authoring stories
-  userData.stories.authoring.forEach(async (story) => {
-    await deleteStory(story.id);
-  });
+  if (userData.stories && userData.stories.authoring) {
+    userData.stories.authoring.forEach(async (story) => {
+      await deleteStory(story.id);
+    });
+  }
 
   // Clean up user settings folder
   admin
