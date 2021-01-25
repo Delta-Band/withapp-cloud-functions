@@ -2,7 +2,7 @@
 const functions = require('firebase-functions');
 
 const onPostCreateImpl = require('./background/onPostCreateImpl');
-
+const onCommentCreateImpl = require('./background/onCommentCreateImpl');
 
 // The Firebase Admin SDK to access Cloud Firestore.
 const admin = require('firebase-admin');
@@ -71,6 +71,14 @@ async function deleteStory(storyId) {
 }
 
 
-exports.onPostCreate = functions.firestore.document('stories/{storyId}/posts').onCreate(
+exports.onPostCreate = functions
+  .firestore
+  .document('stories/{storyId}/posts')
+  .onCreate(
   onPostCreateImpl
 );
+
+exports.onCommentCreate = functions
+  .firestore
+  .document('stories/{storyId}/comments')
+  .onCreate(onCommentCreateImpl);

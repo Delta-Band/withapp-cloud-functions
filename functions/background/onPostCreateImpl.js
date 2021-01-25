@@ -8,23 +8,27 @@ async function onPostCreateImpl(snapshot, context) {
 
 	const postNotifiers = storyData.data().postNotifiers;
 
-	console.log(storyData.data());
+	if(postNotifiers !== undefined){
+		console.log(storyData.data());
 
-	const promises = [];
+		const promises = [];
 
-	for(const uid in postNotifiers){
-		promises.push( admin.messaging()
-			.sendToTopic(uid,{
-				data:{
-					storyId: storyRef.id,
-					click_action: 'FLUTTER_NOTIFICATION_CLICK',
-				}
-			},{
-				title:`${storyData.data().title} has a new post`
-			})
-		);
+		const notification = {
+			title:`${storyData.data().title} has a new post`
+		};
+
+		for(const uid in postNotifiers){
+			promises.push( admin.messaging()
+				.sendToTopic(uid,{
+					data:{
+						storyId: storyRef.id,
+						click_action: 'FLUTTER_NOTIFICATION_CLICK',
+					},
+					notification,
+				}));
+		}
+
+		await Promise.all(promises);
 	}
-
-	await Promise.all(promises);
 }
 
