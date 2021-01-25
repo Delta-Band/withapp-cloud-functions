@@ -1,45 +1,51 @@
-const admin = require('firebase-admin');
+const admin = require("firebase-admin");
 
-async function createNotification(uid, storyTitle,text) {
-	const authorRef = await admin.firestore().doc(`users/${uid}`).get();
-	const authorData = await authorRef.data();
+async function createNotification(uid, storyTitle, text) {
+  const authorRef = await admin.firestore().doc(`users/${uid}`).get();
+  const authorData = await authorRef.data();
 
-	return {
-		title: `${storyTitle} @ ${authorData.display_name}`,
-		body: text,
-	}
-
+  return {
+    title: `${storyTitle} @ ${authorData.display_name}`,
+    body: text,
+  };
 }
 
-async function onCommentCreate(snapshot, context) {
-	const storyRef = await admin.firestore().doc(`stories/${context.params.storyId}`).get();
+async function onCommentCreateImpl(snapshot, context) {
+  const storyRef = await admin
+    .firestore()
+    .doc(`stories/${context.params.storyId}`)
+    .get();
 
-	const storyData = await storyRef.data();
-	const commentData = snapshot.data();
+  const storyData = storyRef.data();
+  const commentData = snapshot.data();
 
+  const discussionNotifiers = storyData.postNotifiers;
 
-	const discussionNotifiers = storyData.postNotifiers;
+  const notification = await createNotification(
+    commentData.author,
+    storyData.title,
+    commentData.text
+  );
 
-	const notification = createNotification(commentData.author,storyData.title, commentData.text);
+  if (discussionNotifiers !== undefined) {
+    const promises = [];
 
-	if(discussionNotifiers !== undefined){
-		console.log(storyData.data());
+    discussionNotifiers.forEach((uid) => {
+      promises.push(
+        admin.messaging().sendToTopic(uid, {
+          data: {
+            storyId: storyRef.id,
+            click_action: "FLUTTER_NOTIFICATION_CLICK",
+          },
+          notification,
+        })
+      );
+    });
 
-		const promises = [];
-
-		for(const uid in discussionNotifiers) {
-			promises.push( admin.messaging()
-				.sendToTopic(uid,{
-					data:{
-						storyId: storyRef.id,
-						click_action: 'FLUTTER_NOTIFICATION_CLICK',
-					},
-					notification,
-				}));
-		}
-
-		await Promise.all(promises);
-	}
-
+    await Promise.all(promises);
+  }
 }
 
+module.exports = {
+  onCommentCreateImpl,
+};

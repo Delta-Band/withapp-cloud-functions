@@ -1,16 +1,17 @@
 // The Cloud Functions for Firebase SDK to create Cloud Functions and setup triggers.
-const functions = require('firebase-functions');
 
-const onPostCreateImpl = require('./background/onPostCreateImpl');
-const onCommentCreateImpl = require('./background/onCommentCreateImpl');
+const functions = require("firebase-functions");
+
+const postImpl = require("./background/onPostCreateImpl");
+const commentImpl = require("./background/onCommentCreateImpl");
 
 // The Firebase Admin SDK to access Cloud Firestore.
-const admin = require('firebase-admin');
+const admin = require("firebase-admin");
+
 admin.initializeApp();
 
-
 exports.deleteUser = functions.auth.user().onDelete(async (userRecord) => {
-  const userRef = admin.firestore().collection('users').doc(userRecord.uid);
+  const userRef = admin.firestore().collection("users").doc(userRecord.uid);
   const userDoc = await userRef.get();
   const userData = userDoc.data();
 
@@ -27,7 +28,7 @@ exports.deleteUser = functions.auth.user().onDelete(async (userRecord) => {
     .bucket()
     .deleteFiles(
       {
-        prefix: `users/${userRecord.uid}/`
+        prefix: `users/${userRecord.uid}/`,
       },
       (err) => {
         if (err) {
@@ -50,13 +51,13 @@ exports.deleteUser = functions.auth.user().onDelete(async (userRecord) => {
 });
 
 async function deleteStory(storyId) {
-  await admin.firestore().collection('stories').doc(storyId).delete();
+  await admin.firestore().collection("stories").doc(storyId).delete();
   admin
     .storage()
     .bucket()
     .deleteFiles(
       {
-        prefix: `stories/${storyId}/`
+        prefix: `stories/${storyId}/`,
       },
       (err) => {
         if (err) {
@@ -70,15 +71,10 @@ async function deleteStory(storyId) {
     );
 }
 
+exports.onCommentCreate = functions.firestore
+  .document("stories/{storyId}/comments/{commentId}")
+  .onCreate(commentImpl.onCommentCreateImpl);
 
-exports.onPostCreate = functions
-  .firestore
-  .document('stories/{storyId}/posts')
-  .onCreate(
-  onPostCreateImpl
-);
-
-exports.onCommentCreate = functions
-  .firestore
-  .document('stories/{storyId}/comments')
-  .onCreate(onCommentCreateImpl);
+exports.onPostCreate = functions.firestore
+  .document("stories/{storyId}/posts/{postId}")
+  .onCreate(postImpl.onPostCreateImpl);

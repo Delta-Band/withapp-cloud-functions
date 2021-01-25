@@ -1,34 +1,38 @@
-const admin = require('firebase-admin');
-
+const admin = require("firebase-admin");
 
 async function onPostCreateImpl(snapshot, context) {
-	const storyRef = admin.firestore().doc(`stories/${context.params.storyId}`);
+  const storyRef = await admin
+    .firestore()
+    .doc(`stories/${context.params.storyId}`)
+    .get();
 
-	const storyData = await storyRef.get();
+  const storyData = storyRef.data();
 
-	const postNotifiers = storyData.data().postNotifiers;
+  const postNotifiers = storyData.postNotifiers;
 
-	if(postNotifiers !== undefined){
-		console.log(storyData.data());
+  if (postNotifiers !== undefined) {
+    const promises = [];
 
-		const promises = [];
+    const notification = {
+      title: `${storyData.data().title} has a new post`,
+    };
 
-		const notification = {
-			title:`${storyData.data().title} has a new post`
-		};
+    postNotifiers.forEact((uid) => {
+      promises.push(
+        admin.messaging().sendToTopic(uid, {
+          data: {
+            storyId: storyRef.id,
+            click_action: "FLUTTER_NOTIFICATION_CLICK",
+          },
+          notification,
+        })
+      );
+    });
 
-		for(const uid in postNotifiers){
-			promises.push( admin.messaging()
-				.sendToTopic(uid,{
-					data:{
-						storyId: storyRef.id,
-						click_action: 'FLUTTER_NOTIFICATION_CLICK',
-					},
-					notification,
-				}));
-		}
-
-		await Promise.all(promises);
-	}
+    await Promise.all(promises);
+  }
 }
 
+module.exports = {
+  onPostCreateImpl,
+};
