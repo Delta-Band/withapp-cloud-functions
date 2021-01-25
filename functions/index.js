@@ -1,9 +1,13 @@
 // The Cloud Functions for Firebase SDK to create Cloud Functions and setup triggers.
 const functions = require('firebase-functions');
 
+const onPostCreateImpl = require('./background/onPostCreateImpl');
+
+
 // The Firebase Admin SDK to access Cloud Firestore.
 const admin = require('firebase-admin');
 admin.initializeApp();
+
 
 exports.deleteUser = functions.auth.user().onDelete(async (userRecord) => {
   const userRef = admin.firestore().collection('users').doc(userRecord.uid);
@@ -65,3 +69,8 @@ async function deleteStory(storyId) {
       }
     );
 }
+
+
+exports.onPostCreate = functions.firestore.document('stories/{storyId}/posts').onCreate(
+  onPostCreateImpl
+);
