@@ -14,10 +14,10 @@ async function onPostCreateImpl(snapshot, context) {
     const promises = [];
 
     const notification = {
-      title: `${storyData.data().title} has a new post`,
+      title: `${storyData.title} has a new post`,
     };
 
-    postNotifiers.forEact((uid) => {
+    postNotifiers.forEach((uid) => {
       promises.push(
         admin.messaging().sendToTopic(uid, {
           data: {
