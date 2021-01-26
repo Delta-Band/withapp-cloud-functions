@@ -2,7 +2,7 @@ const admin = require("firebase-admin");
 
 async function createNotification(uid, storyTitle, text) {
   const authorRef = await admin.firestore().doc(`users/${uid}`).get();
-  const authorData = await authorRef.data();
+  const authorData = authorRef.data();
 
   return {
     title: `${storyTitle} @ ${authorData.display_name}`,
@@ -19,7 +19,9 @@ async function onCommentCreateImpl(snapshot, context) {
   const storyData = storyRef.data();
   const commentData = snapshot.data();
 
-  const discussionNotifiers = storyData.postNotifiers;
+  const discussionNotifiers = storyData.discussionNotifiers.filter(
+    (uid) => uid !== commentData.author
+  );
 
   const notification = await createNotification(
     commentData.author,
@@ -34,7 +36,7 @@ async function onCommentCreateImpl(snapshot, context) {
       promises.push(
         admin.messaging().sendToTopic(uid, {
           data: {
-            storyId: storyRef.id,
+            storyId: context.params.storyId,
             click_action: "FLUTTER_NOTIFICATION_CLICK",
           },
           notification,
