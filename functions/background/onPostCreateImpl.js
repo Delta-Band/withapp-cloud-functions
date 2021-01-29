@@ -8,9 +8,15 @@ async function onPostCreateImpl(_snapshot, context) {
 
   const storyData = storyRef.data();
 
-  const postNotifiers = storyData.postNotifiers.filter(
-    (uid) => uid !== storyData.author
-  );
+  const users = await admin
+    .firestore()
+    .collection("users")
+    .where("notifiers.posts", "array-contains", context.params.storyId)
+    .get();
+
+  const postNotifiers = [];
+
+  users.forEach((doc) => postNotifiers.push(doc.id));
 
   if (postNotifiers !== undefined) {
     const promises = [];

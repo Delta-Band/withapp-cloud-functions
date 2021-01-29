@@ -19,9 +19,21 @@ async function onCommentCreateImpl(snapshot, context) {
   const storyData = storyRef.data();
   const commentData = snapshot.data();
 
-  const discussionNotifiers = storyData.discussionNotifiers.filter(
-    (uid) => uid !== commentData.author
-  );
+  const users = await admin
+    .firestore()
+    .collection("users")
+    .where("notifiers.comments", "array-contains", context.params.storyId)
+    .get();
+
+  const discussionNotifiers = [];
+
+  users.forEach((doc) => {
+    if (doc.id !== commentData.author) {
+      return discussionNotifiers.push(doc.id);
+    } else {
+      return null;
+    }
+  });
 
   const notification = await createNotification(
     commentData.author,
