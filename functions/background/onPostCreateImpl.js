@@ -1,34 +1,47 @@
-const admin = require('firebase-admin');
+const admin = require("firebase-admin");
 
+async function onPostCreateImpl(_snapshot, context) {
+  const storyRef = await admin
+    .firestore()
+    .doc(`stories/${context.params.storyId}`)
+    .get();
 
-async function onPostCreateImpl(snapshot, context) {
-	const storyRef = admin.firestore().doc(`stories/${context.params.storyId}`);
+  const storyData = storyRef.data();
 
-	const storyData = await storyRef.get();
+  const users = await admin
+    .firestore()
+    .collection("users")
+    .where("notifiers.posts", "array-contains", context.params.storyId)
+    .get();
 
-	const postNotifiers = storyData.data().postNotifiers;
+  const postNotifiers = [];
 
-	if(postNotifiers !== undefined){
-		console.log(storyData.data());
+  users.forEach((doc) => postNotifiers.push(doc.id));
 
-		const promises = [];
+  if (postNotifiers !== undefined) {
+    const promises = [];
 
-		const notification = {
-			title:`${storyData.data().title} has a new post`
-		};
+    const notification = {
+      title: storyData.title,
+      body: "has a new post",
+    };
 
-		for(const uid in postNotifiers){
-			promises.push( admin.messaging()
-				.sendToTopic(uid,{
-					data:{
-						storyId: storyRef.id,
-						click_action: 'FLUTTER_NOTIFICATION_CLICK',
-					},
-					notification,
-				}));
-		}
+    postNotifiers.forEach((uid) => {
+      promises.push(
+        admin.messaging().sendToTopic(uid, {
+          data: {
+            storyId: context.params.storyId,
+            click_action: "FLUTTER_NOTIFICATION_CLICK",
+          },
+          notification,
+        })
+      );
+    });
 
-		await Promise.all(promises);
-	}
+    await Promise.all(promises);
+  }
 }
 
+module.exports = {
+  onPostCreateImpl,
+};
