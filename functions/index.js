@@ -4,9 +4,7 @@ const functions = require("firebase-functions");
 
 const postImpl = require("./background/onPostCreateImpl");
 const commentImpl = require("./background/onCommentCreateImpl");
-
-const onPostCreateImpl = require("./background/onPostCreateImpl");
-const onCommentCreateImpl = require("./background/onCommentCreateImpl");
+const sotryCreate = require("./background/onStoryCreate");
 
 // The Firebase Admin SDK to access Cloud Firestore.
 const admin = require("firebase-admin");
@@ -81,3 +79,7 @@ exports.onCommentCreate = functions.firestore
 exports.onPostCreate = functions.firestore
   .document("stories/{storyId}/posts/{postId}")
   .onCreate(postImpl.onPostCreateImpl);
+
+exports.onStoryCreate = functions.firestore
+  .document("stories/{storyId}")
+  .onCreate(sotryCreate.onStoryCreateImpl);

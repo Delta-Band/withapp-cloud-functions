@@ -24,6 +24,7 @@ async function onPostCreateImpl(_snapshot, context) {
     const notification = {
       title: storyData.title,
       body: "has a new post",
+      image: storyData.cover !== undefined ? storyData.cover : "",
     };
 
     postNotifiers.forEach((uid) => {
