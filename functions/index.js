@@ -2,9 +2,9 @@
 
 const functions = require("firebase-functions");
 
-const postImpl = require("./background/onPostCreateImpl");
-const commentImpl = require("./background/onCommentCreateImpl");
-const sotryCreate = require("./background/onStoryCreate");
+const onPosts = require("./background/onPostCreateImpl");
+const onComments = require("./background/onCommentCreateImpl");
+const onStory = require("./background/onStoryCreate");
 
 // The Firebase Admin SDK to access Cloud Firestore.
 const admin = require("firebase-admin");
@@ -74,12 +74,24 @@ async function deleteStory(storyId) {
 
 exports.onCommentCreate = functions.firestore
   .document("stories/{storyId}/comments/{commentId}")
-  .onCreate(commentImpl.onCommentCreateImpl);
+  .onCreate(onComments.onCommentCreateImpl);
+
+exports.onCommentDelete = functions.firestore
+  .document("stories/{storyId}/comments/{commentId}")
+  .onDelete(onComments.onCommentDelete);
 
 exports.onPostCreate = functions.firestore
   .document("stories/{storyId}/posts/{postId}")
-  .onCreate(postImpl.onPostCreateImpl);
+  .onCreate(onPosts.onPostCreateImpl);
+
+exports.onPostDelete = functions.firestore
+  .document("stories/{storyId}/posts/{postId}")
+  .onDelete(onPosts.onPostDeleteImpl);
+
+exports.onPostUpdate = functions.firestore
+  .document("stories/{storyId}/posts/{postId}")
+  .onUpdate(onPosts.onPostUpdate);
 
 exports.onStoryCreate = functions.firestore
   .document("stories/{storyId}")
-  .onCreate(sotryCreate.onStoryCreateImpl);
+  .onCreate(onStory.onStoryCreateImpl);

@@ -5,6 +5,7 @@ function createNotification(name, cover) {
     title: `${name} has started an new story.`,
     body: "Jump into see what they are up to!",
     image: cover === undefined ? "" : cover,
+    icon: cover === undefined ? "" : cover,
   };
 }
 
