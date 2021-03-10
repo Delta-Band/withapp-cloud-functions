@@ -25,6 +25,12 @@ async function onCommentCreateImpl(snapshot, context) {
     .where("notifiers.comments", "array-contains", context.params.storyId)
     .get();
 
+  // Updating the timestamp
+  await admin.firestore().doc(`stories/${context.params.storyId}`).update({
+    latestActivityTimestamp: admin.firestore.FieldValue.serverTimestamp(),
+  });
+
+  // Notifications part
   const discussionNotifiers = [];
 
   users.forEach((doc) => {

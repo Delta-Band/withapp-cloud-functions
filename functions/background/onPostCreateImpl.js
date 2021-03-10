@@ -14,6 +14,12 @@ async function onPostCreateImpl(_snapshot, context) {
     .where("notifiers.posts", "array-contains", context.params.storyId)
     .get();
 
+  // Updating the timestamp
+  await admin.firestore().doc(`stories/${context.params.storyId}`).update({
+    latestActivityTimestamp: admin.firestore.FieldValue.serverTimestamp(),
+  });
+
+  // Notifications part
   const postNotifiers = [];
 
   users.forEach((doc) => postNotifiers.push(doc.id));
@@ -25,6 +31,7 @@ async function onPostCreateImpl(_snapshot, context) {
       title: storyData.title,
       body: "has a new post",
       image: storyData.cover !== undefined ? storyData.cover : "",
+      icon: storyData.cover !== undefined ? storyData.cover : "",
     };
 
     postNotifiers.forEach((uid) => {
