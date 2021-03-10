@@ -50,6 +50,60 @@ async function onPostCreateImpl(_snapshot, context) {
   }
 }
 
+async function onPostDeleteImpl(snapshot, context) {
+  var timestamps = [];
+
+  const latestPostCol = await admin
+    .firestore()
+    .collection(`stories/${context.params.storyId}/posts`)
+    .orderBy("timestamp", "desc")
+    .limit(1)
+    .get(1);
+
+  const latestCommentCol = await admin
+    .firestore()
+    .collection(`stories/${context.params.storyId}/comments`)
+    .orderBy("timestamp", "desc")
+    .limit(1)
+    .get(1);
+
+  latestPostCol.docs.forEach((doc) => {
+    if (doc.exists) {
+      timestamps.push(doc.get("timestamp"));
+    }
+  });
+
+  latestCommentCol.docs.forEach((doc) => {
+    if (doc.exists) {
+      timestamps.push(doc.get("timestamp"));
+    }
+  });
+
+  var latestActivityTimestamp;
+
+  if (timestamps.length === 2) {
+    if (timestamps[0] > timestamps[1]) {
+      latestActivityTimestamp = timestamps[0];
+    } else {
+      latestActivityTimestamp = timestamps[1];
+    }
+  } else {
+    latestActivityTimestamp = timestamps[0];
+  }
+  await admin.firestore().doc(`stories/${context.params.storyId}`).update({
+    latestActivityTimestamp: latestActivityTimestamp,
+  });
+}
+
+async function onPostUpdate(_snapshot, context) {
+  // Updating the timestamp
+  await admin.firestore().doc(`stories/${context.params.storyId}`).update({
+    latestActivityTimestamp: admin.firestore.FieldValue.serverTimestamp(),
+  });
+}
+
 module.exports = {
   onPostCreateImpl,
+  onPostDeleteImpl,
+  onPostUpdate,
 };
