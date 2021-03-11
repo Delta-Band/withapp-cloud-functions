@@ -50,7 +50,7 @@ async function onPostCreateImpl(_snapshot, context) {
   }
 }
 
-async function onPostDeleteImpl(snapshot, context) {
+async function onPostDeleteImpl(_snapshot, context) {
   var timestamps = [];
 
   const latestPostCol = await admin

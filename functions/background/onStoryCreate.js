@@ -12,6 +12,12 @@ function createNotification(name, cover) {
 async function onStoryCreateImpl(snapshot, context) {
   const storyData = snapshot.data();
 
+  // Updating the timestamp
+  await admin.firestore().doc(`stories/${context.params.storyId}`).update({
+    latestActivityTimestamp: admin.firestore.FieldValue.serverTimestamp(),
+  });
+
+  // Notification
   const ownerRef = await admin
     .firestore()
     .doc(`users/${storyData.owner}`)
