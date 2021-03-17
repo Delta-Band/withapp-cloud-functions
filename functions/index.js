@@ -5,6 +5,7 @@ const functions = require("firebase-functions");
 const onPosts = require("./background/onPostCreateImpl");
 const onComments = require("./background/onCommentCreateImpl");
 const onStory = require("./background/onStoryCreate");
+const onUser = require("./background/onUser");
 
 // The Firebase Admin SDK to access Cloud Firestore.
 const admin = require("firebase-admin");
@@ -95,3 +96,7 @@ exports.onPostUpdate = functions.firestore
 exports.onStoryCreate = functions.firestore
   .document("stories/{storyId}")
   .onCreate(onStory.onStoryCreateImpl);
+
+exports.onUserUpdate = functions.firestore
+  .document("users/{userId}")
+  .onUpdate(onUser.onUserUpdate);
